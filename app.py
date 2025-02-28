@@ -5,11 +5,7 @@ import time
 from datetime import datetime
 import requests
 import os
-from dotenv import load_dotenv
-from mistral_api import MistralAPI
-
-# Load environment variables
-load_dotenv()
+from gemini_api import GeminiAPI
 
 # App configuration
 st.set_page_config(
@@ -69,6 +65,20 @@ st.markdown("""
         border: 2px solid #4e89ae;
         background-color: #e6f2ff;
     }
+    .genre-icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+    .loading {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .footer {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 0.8rem;
+        color: #666;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -111,27 +121,20 @@ def reset_game():
     st.session_state.game_ended = False
     st.session_state.story_start_time = None
 
-# Initialize Mistral API
+# Initialize Gemini API
 @st.cache_resource
-def load_mistral_api():
-    """Initialize and cache the Mistral API client"""
+def load_gemini_api():
+    """Initialize and cache the Gemini API client"""
     try:
-        # Get API key from secrets or environment
-        api_key = st.secrets.get("MISTRAL_API_KEY", os.environ.get("MISTRAL_API_KEY"))
-        
-        if not api_key:
-            st.error("Mistral API key not found. Please set it in your Streamlit secrets or as an environment variable.")
-            return None
-            
-        # Create API client
-        return MistralAPI(api_key)
+        # Create API client (API key will be loaded from secrets or env var)
+        return GeminiAPI()
     except Exception as e:
-        st.error(f"Failed to initialize Mistral API: {str(e)}")
+        st.error(f"Failed to initialize Gemini API: {str(e)}")
         return None
 
 # Generate story content using AI
 def generate_story_content(prompt, max_length=150):
-    api_client = load_mistral_api()
+    api_client = load_gemini_api()
     if api_client:
         try:
             # Generate text via API
@@ -149,9 +152,11 @@ def generate_story_content(prompt, max_length=150):
 
 # Function to create a new scene with AI-generated content
 def create_new_scene(scene_prompt, option1_prompt, option2_prompt):
-    scene_text = generate_story_content(scene_prompt, max_length=200)
-    option1 = generate_story_content(option1_prompt, max_length=50)
-    option2 = generate_story_content(option2_prompt, max_length=50)
+    # Show a loading message
+    with st.spinner("The story is unfolding..."):
+        scene_text = generate_story_content(scene_prompt, max_length=200)
+        option1 = generate_story_content(option1_prompt, max_length=50)
+        option2 = generate_story_content(option2_prompt, max_length=50)
     
     # Create a unique scene ID
     scene_id = f"scene_{len(st.session_state.story_data) + 1}"
@@ -254,10 +259,13 @@ def main():
                 # Create a card with icon for each genre
                 icon = genre_icons.get(genre, "📖")
                 
+                # Display the genre card
+                st.markdown(f"<div class='genre-icon'>{icon}</div>", unsafe_allow_html=True)
+                
                 # Style the selected genre
-                if st.button(f"{icon} {genre}", key=f"genre_{genre}"):
+                if st.button(genre, key=f"genre_{genre}"):
                     st.session_state.genre = genre
-                    st.rerun()
+                    st.experimental_rerun()
     
     # Player name input
     elif st.session_state.current_scene == "start" and st.session_state.genre and not st.session_state.player_name:
@@ -270,15 +278,17 @@ def main():
         if st.button("Begin Your Adventure") and player_name:
             st.session_state.player_name = player_name
             
-            # Create the initial scene
-            scene_prompt = f"Start a {st.session_state.genre} story where the main character named {player_name} begins their journey."
-            option1_prompt = f"First possible action for {player_name} at the beginning of this {st.session_state.genre} story"
-            option2_prompt = f"Second possible action for {player_name} at the beginning of this {st.session_state.genre} story, different from the first"
+            # Create the initial scene with loading indicator
+            with st.spinner("Creating your adventure..."):
+                scene_prompt = f"Start a {st.session_state.genre} story where the main character named {player_name} begins their journey."
+                option1_prompt = f"First possible action for {player_name} at the beginning of this {st.session_state.genre} story"
+                option2_prompt = f"Second possible action for {player_name} at the beginning of this {st.session_state.genre} story, different from the first"
+                
+                initial_scene = create_new_scene(scene_prompt, option1_prompt, option2_prompt)
+                st.session_state.current_scene = initial_scene
+                st.session_state.story_start_time = time.time()
             
-            initial_scene = create_new_scene(scene_prompt, option1_prompt, option2_prompt)
-            st.session_state.current_scene = initial_scene
-            st.session_state.story_start_time = time.time()
-            st.rerun()
+            st.experimental_rerun()
     
     # Display current scene and choices
     elif st.session_state.current_scene in st.session_state.story_data:
@@ -303,14 +313,14 @@ def main():
             for i, option in enumerate(current_scene_data["options"]):
                 if st.button(option["text"], key=f"option_{i}", use_container_width=True):
                     make_choice(i)
-                    st.rerun()
+                    st.experimental_rerun()
         else:
             # End of game options
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Play Again", use_container_width=True):
                     reset_game()
-                    st.rerun()
+                    st.experimental_rerun()
             
             with col2:
                 # Compile story and offer download
@@ -326,6 +336,9 @@ def main():
             # Show story preview
             st.markdown("## Your Adventure Preview")
             st.markdown(full_story)
+    
+    # Footer
+    st.markdown("<div class='footer'>Powered by Google Gemini AI</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
