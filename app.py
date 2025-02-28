@@ -257,7 +257,7 @@ def main():
                 # Style the selected genre
                 if st.button(f"{icon} {genre}", key=f"genre_{genre}"):
                     st.session_state.genre = genre
-                    st.experimental_rerun()
+                    st.rerun()
     
     # Player name input
     elif st.session_state.current_scene == "start" and st.session_state.genre and not st.session_state.player_name:
@@ -278,7 +278,7 @@ def main():
             initial_scene = create_new_scene(scene_prompt, option1_prompt, option2_prompt)
             st.session_state.current_scene = initial_scene
             st.session_state.story_start_time = time.time()
-            st.experimental_rerun()
+            st.rerun()
     
     # Display current scene and choices
     elif st.session_state.current_scene in st.session_state.story_data:
@@ -303,14 +303,14 @@ def main():
             for i, option in enumerate(current_scene_data["options"]):
                 if st.button(option["text"], key=f"option_{i}", use_container_width=True):
                     make_choice(i)
-                    st.experimental_rerun()
+                    st.rerun()
         else:
             # End of game options
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Play Again", use_container_width=True):
                     reset_game()
-                    st.experimental_rerun()
+                    st.rerun()
             
             with col2:
                 # Compile story and offer download
