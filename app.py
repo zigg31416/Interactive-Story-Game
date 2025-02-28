@@ -3,9 +3,14 @@ import json
 import random
 import time
 from datetime import datetime
-from transformers import pipeline
 import streamlit_lottie as st_lottie
 import requests
+import os
+from dotenv import load_dotenv
+from mistral_api import MistralAPI
+
+# Load environment variables
+load_dotenv()
 
 # App configuration
 st.set_page_config(
@@ -114,35 +119,36 @@ def reset_game():
     st.session_state.game_ended = False
     st.session_state.story_start_time = None
 
-# Initialize AI model
+# Initialize Mistral API
 @st.cache_resource
-def load_ai_model():
+def load_mistral_api():
+    """Initialize and cache the Mistral API client"""
     try:
-        # Using Deepseek model from Hugging Face
-        model = pipeline("text-generation", model="deepseek-ai/deepseek-coder-1.3b-instruct")
-        return model
+        # Get API key from secrets or environment
+        api_key = st.secrets.get("MISTRAL_API_KEY", os.environ.get("MISTRAL_API_KEY"))
+        
+        if not api_key:
+            st.error("Mistral API key not found. Please set it in your Streamlit secrets or as an environment variable.")
+            return None
+            
+        # Create API client
+        return MistralAPI(api_key)
     except Exception as e:
-        st.error(f"Failed to load AI model: {str(e)}")
+        st.error(f"Failed to initialize Mistral API: {str(e)}")
         return None
 
 # Generate story content using AI
 def generate_story_content(prompt, max_length=150):
-    model = load_ai_model()
-    if model:
+    api_client = load_mistral_api()
+    if api_client:
         try:
-            # Adding the player name and genre to the context
-            context = f"Genre: {st.session_state.genre}. Character: {st.session_state.player_name}. "
-            full_prompt = context + prompt
-            
-            # Generate text with the model
-            response = model(
-                full_prompt, 
-                max_length=max_length, 
-                num_return_sequences=1, 
-                temperature=0.8  # Adjust for creativity
+            # Generate text via API
+            return api_client.generate_story(
+                prompt=prompt,
+                player_name=st.session_state.player_name,
+                genre=st.session_state.genre,
+                max_tokens=max_length
             )
-            
-            return response[0]['generated_text'][len(full_prompt):]
         except Exception as e:
             st.error(f"Error generating story content: {str(e)}")
             return "The story continues but the words are difficult to discern..."
