@@ -75,10 +75,36 @@ st.markdown("""
 
 # Function to load Lottie animations
 def load_lottieurl(url):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
+    try:
+        r = requests.get(url, timeout=10)
+        if r.status_code == 200:
+            return r.json()
+        else:
+            st.warning(f"Failed to load animation from {url}. Status code: {r.status_code}")
+            # Return a simple fallback animation
+            return {"v":"5.5.7","fr":60,"ip":0,"op":60,"w":100,"h":100,"nm":"Simple Animation",
+                    "ddd":0,"assets":[],"layers":[{"ddd":0,"ind":1,"ty":4,"nm":"Shape Layer",
+                    "sr":1,"ks":{"o":{"a":0,"k":100},"r":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},
+                    "o":{"x":[0.167],"y":[0.167]},"t":0,"s":[0]},{"t":60,"s":[360]}]},"p":{"a":0,
+                    "k":[50,50,0]},"a":{"a":0,"k":[0,0,0]},"s":{"a":0,"k":[100,100,100]}},"ao":0,
+                    "shapes":[{"ty":"rc","d":1,"s":{"a":0,"k":[50,50]},"p":{"a":0,"k":[0,0]},
+                    "r":{"a":0,"k":0},"nm":"Rectangle Path 1","mn":"ADBE Vector Shape - Rect",
+                    "hd":false},{"ty":"fl","c":{"a":0,"k":[0.30980392156862746,0.5372549019607843,
+                    0.6823529411764706,1]},"o":{"a":0,"k":100},"r":1,"bm":0,"nm":"Fill 1",
+                    "mn":"ADBE Vector Graphic - Fill","hd":false}],"ip":0,"op":60,"st":0,"bm":0}]}
+    except requests.exceptions.RequestException as e:
+        st.warning(f"Error loading animation: {e}")
+        # Return a simple fallback animation in case of any request exception
+        return {"v":"5.5.7","fr":60,"ip":0,"op":60,"w":100,"h":100,"nm":"Simple Animation",
+                "ddd":0,"assets":[],"layers":[{"ddd":0,"ind":1,"ty":4,"nm":"Shape Layer",
+                "sr":1,"ks":{"o":{"a":0,"k":100},"r":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},
+                "o":{"x":[0.167],"y":[0.167]},"t":0,"s":[0]},{"t":60,"s":[360]}]},"p":{"a":0,
+                "k":[50,50,0]},"a":{"a":0,"k":[0,0,0]},"s":{"a":0,"k":[100,100,100]}},"ao":0,
+                "shapes":[{"ty":"rc","d":1,"s":{"a":0,"k":[50,50]},"p":{"a":0,"k":[0,0]},
+                "r":{"a":0,"k":0},"nm":"Rectangle Path 1","mn":"ADBE Vector Shape - Rect",
+                "hd":false},{"ty":"fl","c":{"a":0,"k":[0.30980392156862746,0.5372549019607843,
+                0.6823529411764706,1]},"o":{"a":0,"k":100},"r":1,"bm":0,"nm":"Fill 1",
+                "mn":"ADBE Vector Graphic - Fill","hd":false}],"ip":0,"op":60,"st":0,"bm":0}]}
 
 # Initialize session state variables if they don't exist
 if 'story_data' not in st.session_state:
@@ -100,12 +126,12 @@ if 'story_start_time' not in st.session_state:
 
 # Lottie animations for different genres
 lottie_animations = {
-    "Horror": "https://assets4.lottiefiles.com/packages/lf20_jldti4py.json",
-    "Adventure": "https://assets3.lottiefiles.com/packages/lf20_tedcqsrv.json",
-    "Romance": "https://assets7.lottiefiles.com/private_files/lf30_bfzun1k6.json",
-    "Fantasy": "https://assets9.lottiefiles.com/packages/lf20_hfnjz1gu.json",
-    "Sci-Fi": "https://assets5.lottiefiles.com/packages/lf20_xzKXAL.json",
-    "Mystery": "https://assets8.lottiefiles.com/packages/lf20_xl3xh8kr.json"
+    "Horror": "https://lottie.host/8fcea21b-0c0c-4c8e-a00d-07cd50208b15/6Aig9AUo6B.json",
+    "Adventure": "https://lottie.host/6aa60fda-82ae-484c-a643-d90c89d5b93a/UEVeBwm8mr.json",
+    "Romance": "https://lottie.host/24a3d573-cd22-4c2d-a1b5-a1c7e6cd7a15/J0IjWIK2nV.json",
+    "Fantasy": "https://lottie.host/db619f82-6611-4989-b458-c34a29e79eda/v5s0OdvkGS.json",
+    "Sci-Fi": "https://lottie.host/d0bca245-d46b-4222-82c0-0d36a2ba3c30/LZGvDOcPDn.json",
+    "Mystery": "https://lottie.host/21319eb1-7767-4383-9cf5-f8ee8b6cee7e/ZVUkVDsZzt.json"
 }
 
 # Function to initialize or reset the game
